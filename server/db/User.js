@@ -38,29 +38,33 @@ const User = db.define(
     },
   },
   {
+    //pass the test specs but does not work on the website, user will be changed to a teacher in the database but still show as mentee, TODO: invesitgate
     hooks: {
       beforeUpdate: async (user) => {
+        // console.dir(await user.restore());
         //if trying to change a students mentor
         if (user.changed()[0] === 'mentorId') {
-          if ((await user.getMentor()).isStudent)
+          if ((await user.getMentor()).isStudent) {
             throw new Error(`Can't set student as mentor`);
+          }
         }
         //if trying to change usertype
         if (user.changed()[0] === 'userType') {
           // user.isTeacher is the new value, will cancel update if this fails
           if (user.isTeacher) {
             //if user started as student
-            if (user.mentorId)
-              //change to user.mentorID - should be null
+            if (user.mentorId) {
               throw new Error(
                 'Cannot change to teacher while you have a mentor'
               );
+            }
           } else {
             //if user started as a teacher
-            if ((await user.getMentees()).length)
+            if ((await user.getMentees()).length) {
               throw new Error(
                 'Cannot change to student while you have mentees'
               );
+            }
           }
         }
       },

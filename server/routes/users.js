@@ -19,6 +19,7 @@ const { Op } = require('sequelize');
 
 // Add your routes here:
 
+// /users/unassigned - get a list of students without mentors
 router.get('/unassigned', async (req, res, next) => {
   try {
     const data = await User.findUnassignedStudents();
@@ -29,6 +30,7 @@ router.get('/unassigned', async (req, res, next) => {
   }
 });
 
+// /users/teacher - get a list of teachers and mentees
 router.get('/teachers', async (req, res, next) => {
   try {
     const data = await User.findTeachersAndMentees();
@@ -39,6 +41,7 @@ router.get('/teachers', async (req, res, next) => {
   }
 });
 
+// /user/delete - delete a user
 router.delete('/:id', async (req, res, next) => {
   try {
     if (!Number(req.params.id)) res.sendStatus(400);
@@ -53,12 +56,16 @@ router.delete('/:id', async (req, res, next) => {
   }
 });
 
+// /user/post - create a new user if possible
 router.post('/', async (req, res, next) => {
   try {
     //feel like there has to be a better way to do this than useing two awaits, but if username exists during create it will throw an error and jump to the catch (could make another hook)
-    if (await User.findOne({ where: { name: req.body.name } }))
-      res.sendStatus(409);
-    else {
+    if (await User.findOne({ where: { name: req.body.name } })) {
+      const err = new Error('User already exists');
+      err.status = 409;
+      //sent to error handler in app.js
+      throw err;
+    } else {
       const user = await User.create(req.body);
       res.status(201).send(user);
     }
@@ -68,6 +75,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+// /users/id - change a userid
 router.put('/:id', async (req, res, next) => {
   try {
     const updatedUser = await User.update(req.body, {
@@ -82,6 +90,7 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
+//search query
 router.get('/', async (req, res, next) => {
   try {
     const data = await User.findAll({
