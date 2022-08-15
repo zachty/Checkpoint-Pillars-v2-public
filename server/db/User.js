@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 const Sequelize = require('sequelize');
 const db = require('./db');
 
@@ -49,7 +50,7 @@ const User = db.define(
           // user.isTeacher is the new value, will cancel update if this fails
           if (user.isTeacher) {
             //if user started as student
-            if (await user.getMentor())
+            if (user.mentorId)
               //change to user.mentorID - should be null
               throw new Error(
                 'Cannot change to teacher while you have a mentor'
@@ -67,6 +68,7 @@ const User = db.define(
   }
 );
 
+//MODEL methods
 User.findUnassignedStudents = function () {
   return User.findAll({ where: { mentorId: null, userType: 'STUDENT' } });
 };
@@ -78,6 +80,15 @@ User.findTeachersAndMentees = function () {
       as: 'mentees',
     },
     where: { userType: 'TEACHER' },
+  });
+};
+
+//INSTANCE methods
+User.prototype.getPeers = async function () {
+  const mentor = await this.getMentor();
+  return await mentor.getMentees({
+    //get all mentees WHERE mentee.id != user.id
+    where: { id: { [Sequelize.Op.ne]: [this.id] } },
   });
 };
 

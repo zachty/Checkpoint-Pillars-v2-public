@@ -2,6 +2,7 @@ const router = require('express').Router();
 const {
   models: { User },
 } = require('../db');
+const { Op } = require('sequelize');
 
 /**
  * All of the routes in this are mounted on /api/users
@@ -54,7 +55,7 @@ router.delete('/:id', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    //feel like there has to be a better way to do this than useing two awaits, but if username exists it will throw an error and jump to the catch
+    //feel like there has to be a better way to do this than useing two awaits, but if username exists during create it will throw an error and jump to the catch (could make another hook)
     if (await User.findOne({ where: { name: req.body.name } }))
       res.sendStatus(409);
     else {
@@ -73,9 +74,21 @@ router.put('/:id', async (req, res, next) => {
       where: { id: req.params.id },
       returning: true,
     });
-    console.log(updatedUser);
     if (!updatedUser[0]) res.sendStatus(404);
     else res.send(updatedUser[1][0]);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.get('/', async (req, res, next) => {
+  try {
+    const data = await User.findAll({
+      //where name is like the one searched, case insesnitive
+      where: { name: { [Op.iLike]: `%${req.query.name}%` } },
+    });
+    res.send(data);
   } catch (error) {
     console.error(error);
     next(error);
