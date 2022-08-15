@@ -38,7 +38,6 @@ const User = db.define(
     },
   },
   {
-    //pass the test specs but does not work on the website, user will be changed to a teacher in the database but still show as mentee, TODO: invesitgate
     hooks: {
       beforeUpdate: async (user) => {
         // console.dir(await user.restore());

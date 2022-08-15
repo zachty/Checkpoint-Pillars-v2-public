@@ -78,12 +78,14 @@ router.post('/', async (req, res, next) => {
 // /users/id - change a userid
 router.put('/:id', async (req, res, next) => {
   try {
-    const updatedUser = await User.update(req.body, {
+    const user = await User.findOne({
       where: { id: req.params.id },
-      returning: true,
     });
-    if (!updatedUser[0]) res.sendStatus(404);
-    else res.send(updatedUser[1][0]);
+    if (!user) res.sendStatus(404);
+    else {
+      const updatedUser = await user.update(req.body);
+      res.send(updatedUser);
+    }
   } catch (error) {
     console.error(error);
     next(error);
