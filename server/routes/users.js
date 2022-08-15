@@ -18,4 +18,68 @@ const {
 
 // Add your routes here:
 
+router.get('/unassigned', async (req, res, next) => {
+  try {
+    const data = await User.findUnassignedStudents();
+    res.send(data);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.get('/teachers', async (req, res, next) => {
+  try {
+    const data = await User.findTeachersAndMentees();
+    res.send(data);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.delete('/:id', async (req, res, next) => {
+  try {
+    if (!Number(req.params.id)) res.sendStatus(400);
+    else {
+      const destroyed = await User.destroy({ where: { id: req.params.id } });
+      if (!destroyed) res.sendStatus(404);
+      else res.sendStatus(204);
+    }
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.post('/', async (req, res, next) => {
+  try {
+    //feel like there has to be a better way to do this than useing two awaits, but if username exists it will throw an error and jump to the catch
+    if (await User.findOne({ where: { name: req.body.name } }))
+      res.sendStatus(409);
+    else {
+      const user = await User.create(req.body);
+      res.status(201).send(user);
+    }
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.put('/:id', async (req, res, next) => {
+  try {
+    const updatedUser = await User.update(req.body, {
+      where: { id: req.params.id },
+      returning: true,
+    });
+    console.log(updatedUser);
+    if (!updatedUser[0]) res.sendStatus(404);
+    else res.send(updatedUser[1][0]);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
 module.exports = router;
