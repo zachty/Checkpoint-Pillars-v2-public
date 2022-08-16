@@ -4,7 +4,13 @@
     <link rel="stylesheet" href="/assets/styles.css" />
   </head>
   <body>
-    <h1>Acme Membership</h1>
+    <header>
+      <h1>Acme Membership</h1>
+      <div id="search-box">
+        <input placeholder="search student name" id="username" />
+        <button data-action="search">Create Student</button>
+      </div>
+    </header>
     <div id="error"></div>
     <div id="content">
       <div>
@@ -13,6 +19,7 @@
           <input placeholder="add a student" id="name" />
           <button data-action="create-student">Create Student</button>
         </div>
+        <ul id="results"></ul>
       </div>
       <div>
         <h2>Teachers</h2>

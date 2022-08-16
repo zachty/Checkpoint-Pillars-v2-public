@@ -1,15 +1,21 @@
 import axios from 'axios';
 axios.defaults.timeout = 2000;
 
+//grab whats in new student field, have unassignedList div
 const teacherList = document.querySelector('#teachers');
 const unassignedList = document.querySelector('#unassigned');
+const resultList = document.querySelector('#results');
 const studentNameField = document.querySelector('#name');
+const searchField = document.querySelector('#username');
 const content = document.querySelector('#content');
 const error = document.querySelector('#error');
+const header = document.querySelector('header');
 
+//place to store data from fetchers
 const data = {
   teachers: [],
   unassigned: [],
+  results: [],
 };
 
 const fetchTeachers = async () => {
@@ -37,8 +43,10 @@ const renderTeachers = () => {
   const html = data.teachers
     .map((teacher) => {
       return `
-      <li>
+      <li id="userId${teacher.id}">
+        <div class="names">
         ${teacher.name} (${teacher.mentees && teacher.mentees.length} mentees)
+        </div>
         <button data-action='delete-teacher' data-id='${teacher.id}'>x</button>
         <button data-action='make-teacher-a-student' data-id='${
           teacher.id
@@ -58,11 +66,14 @@ const renderMentees = (mentees) => {
   const html = mentees
     .map((mentee) => {
       return `
-      <li>
+      <li id="userId${mentee.id}">
+      <div class="names">
         ${mentee.name}
+        </div>
         <button data-mentor-id='${mentee.mentorId}' data-action='delete-mentee' data-id='${mentee.id}'>x</button>
         <button data-mentor-id='${mentee.mentorId}' data-action='unassign-mentee' data-id='${mentee.id}'>Unassign Mentee</button>
         <button data-mentor-id='${mentee.mentorId}' data-action='make-mentee-a-teacher' data-id='${mentee.id}'>Make Teacher</button>
+        <button data-mentor-id='${mentee.mentorId}' data-action='get-peers' data-id='${mentee.id}'>Get Peers</button>
       </li>
     `;
     })
@@ -70,12 +81,16 @@ const renderMentees = (mentees) => {
   return html;
 };
 
+//run at start and after create student clicked
 const renderUnassigned = () => {
+  //html to be placed in the unassignedList div
   const html = data.unassigned
     .map((student) => {
       return `
-      <li>
+      <li id="userId${student.id}">
+      <div class="names">
         ${student.name}
+      </div>
         <select data-id='${student.id}' data-action='assign-mentor'>
           <option>--- assign to mentor ---</option>
           ${data.teachers
@@ -99,6 +114,22 @@ const renderUnassigned = () => {
   unassignedList.innerHTML = html;
 };
 
+const renderResults = () => {
+  const html = data.results
+    .map((user) => {
+      return `
+      <a href="#userId${user.id}"><li>
+      <div class="names">
+        ${user.name}
+      </div>
+      </li></a>
+    `;
+    })
+    .join('');
+  resultList.innerHTML = html;
+};
+
+//run at the end to render web page
 const start = async () => {
   await Promise.all([fetchTeachers(), fetchUnassigned()]);
   render();
@@ -108,11 +139,16 @@ const getTeacherById = (id) => {
   return data.teachers.find((teacher) => teacher.id === id);
 };
 
+//run after button is clicked, studentName is what was in the text box
 const createStudent = async (studentName) => {
   try {
+    //run this route and get the response
     const response = await axios.post('/api/users', { name: studentName });
+    //get the data from the response
     const student = response.data;
+    //add the new student to the list of unassigned students in data
     data.unassigned = [student, ...data.unassigned];
+    //run the render again, list should persist
     render();
   } catch (err) {
     console.error('Failed to create new student (POST /api/users)', err);
@@ -265,11 +301,41 @@ const assignMentor = async (studentId, teacherId) => {
   }
 };
 
+const getPeers = async (id) => {
+  try {
+    const response = await axios.get(`/api/users/${id}/peers`);
+    const peers = response.data;
+    data.results = peers;
+    render();
+  } catch (err) {
+    console.error('Failed to create new student (POST /api/users)', err);
+    error.innerText = err.response
+      ? err.response.data.message
+      : 'Request Timed Out';
+  }
+};
+
+const getSearch = async (str) => {
+  try {
+    const response = await axios.get(`/api/users?name=${str}`);
+    const searchResults = response.data;
+    data.results = searchResults;
+    render();
+  } catch (err) {
+    console.error('Failed to search (GET /api/users?)', err);
+    error.innerText = err.response
+      ? err.response.data.message
+      : 'Request Timed Out';
+  }
+};
+
+//what happens when a button is clicked
 content.addEventListener('click', async (ev) => {
   const action = ev.target.getAttribute('data-action');
   const id = +ev.target.getAttribute('data-id');
   const mentorId = +ev.target.getAttribute('data-mentor-id');
   if (action === 'create-student') {
+    //create student button is clicked, run this function
     createStudent(studentNameField.value);
   } else if (action === 'delete-teacher') {
     deleteTeacher(id);
@@ -285,6 +351,16 @@ content.addEventListener('click', async (ev) => {
     makeUnassignedATeacher(id);
   } else if (action === 'unassign-mentee') {
     unassignMentee(id, mentorId);
+  } else if (action === 'get-peers') {
+    getPeers(id);
+  }
+});
+
+//had to add separate event listener for the header
+header.addEventListener('click', async (event) => {
+  const action = event.target.getAttribute('data-action');
+  if (action === 'search') {
+    getSearch(searchField.value);
   }
 });
 
@@ -300,7 +376,9 @@ content.addEventListener('change', async (ev) => {
 function render() {
   renderTeachers();
   renderUnassigned();
+  renderResults();
   studentNameField.value = '';
+  searchField.value = '';
   error.innerText = '';
 }
 

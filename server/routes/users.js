@@ -92,14 +92,29 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-//search query
+//search query /api/users?name=username
 router.get('/', async (req, res, next) => {
   try {
     const data = await User.findAll({
       //where name is like the one searched, case insesnitive
       where: { name: { [Op.iLike]: `%${req.query.name}%` } },
     });
-    res.send(data);
+    if (!data.length) res.sendStatus(404);
+    else res.send(data);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.get('/:id/peers', async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) res.sendStatus(404);
+    else {
+      const data = await user.getPeers();
+      res.send(data);
+    }
   } catch (error) {
     console.error(error);
     next(error);
