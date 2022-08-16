@@ -40,10 +40,11 @@ const User = db.define(
   {
     hooks: {
       beforeUpdate: async (user) => {
-        // console.dir(await user.restore());
         //if trying to change a students mentor
         if (user.changed()[0] === 'mentorId') {
-          if ((await user.getMentor()).isStudent) {
+          const mentor = await user.getMentor();
+          if (!mentor) return; //skip if mentor set to null
+          if (mentor.isStudent) {
             throw new Error(`Can't set student as mentor`);
           }
         }

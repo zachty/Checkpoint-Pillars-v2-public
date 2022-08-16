@@ -60,6 +60,14 @@ input {
   background-color: #6d6875;
 }
 
+button:hover {
+  background-color: #ffffff;
+}
+
+button:active {
+  background-color: #ffffff77;
+}
+
 input::placeholder {
   color: rgba(0, 0, 0, 0.608);
 }
@@ -97,4 +105,34 @@ li > * {
 
 #error {
   color: red;
+}
+
+/*--------------------DEVICE SECTION-------------------*/
+@media (max-width: 1000px) {
+  #content {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+  #content div > ul {
+    display: flex;
+    flex-flow: column;
+    width: 90vw;
+  }
+
+  .names {
+    align-self: center;
+  }
+
+  h2 {
+    background-color: rgba(64, 0, 255, 0.399);
+    width: 30vw;
+    margin-left: 15%;
+  }
+  #create-student-box > h2 {
+    margin-left: 0;
+  }
+  header {
+    flex-direction: column;
+  }
 }
